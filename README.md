@@ -73,6 +73,26 @@ sudo systemctl enable stratum-proxy
 sudo systemctl start stratum-proxy
 ```
 
+## Automated installation script
+
+For convenience, this repository includes a `setup.sh` script that automates installation and configuration on a Raspberry Pi or other Debian‑based system.
+
+1. Grant execute permissions and run the script from the repository root:
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+2. The script prompts you for the MiningRigRentals pool host and port, a local listen port for your Bitaxe, your MRR username.worker, and password. Defaults are suggested and you can press **Enter** to accept them.
+
+3. After collecting the values, the script will:
+   - Copy `stratum_minimal_proxy.py` to `/usr/local/bin/`.
+   - Create a systemd service unit at `/etc/systemd/system/bitaxe-mrr-proxy.service` with the provided parameters.
+   - Reload systemd, enable and start the service so it persists across reboots.
+
+Once completed, your Bitaxe miner can connect to this Raspberry Pi on the specified listen port (default `3333`). The proxy will forward traffic to MiningRigRentals using the credentials you provided.
+
 ## Notes
 
 - MiningRigRentals may redirect you to a different port after connecting (using the `client.reconnect` Stratum message). If that happens, update `--pool-port` accordingly.
