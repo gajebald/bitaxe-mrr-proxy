@@ -26,19 +26,19 @@ python3 stratum_minimal_proxy.py \
   --listen-port 3333 \
   --pool-host eu-de02.miningrigrentals.com \
   --pool-port 3333 \
-  --user gajebald.318975 \
+  --user xxx.xxx \
   --passw x
 ```
 
 - `--listen-port`: Port, an dem Ihr Bitaxe-Miner sich mit dem Proxy verbindet (z. B. 3333).
 - `--pool-host`: Adresse des MiningRigRentals‑Servers (z. B. `eu-de02.miningrigrentals.com`).
 - `--pool-port`: Port des Pools. MiningRigRentals kann per `client.reconnect` auf einen anderen Port verweisen; in diesem Fall muss der Wert angepasst werden.
-- `--user`: Ihr MiningRigRentals‑Benutzername inklusive Worker‑Suffix (Beispiel: `gajebald.318975`).
+- `--user`: Ihr MiningRigRentals‑Benutzername inklusive Worker‑Suffix (Beispiel: `xxx.xxx`).
 - `--passw`: Passwort (bei MRR meist `x`, oder ein individuelles Kennwort).
 
 ## Bitaxe konfigurieren
 
-Tragen Sie im Bitaxe‑Webinterface als Pool‑Adresse die IP‑Adresse Ihres Raspberry Pi und den Listen‑Port ein, z. B. `192.168.178.69:3333`. Benutzername und Passwort können leer bleiben, da der Proxy diese automatisch an MiningRigRentals übergibt.
+Tragen Sie im Bitaxe‑Webinterface als Pool‑Adresse die IP‑Adresse Ihres Raspberry Pi und den Listen‑Port ein, z. B. `192.168.178.60:3333`. Benutzername und Passwort können leer bleiben, da der Proxy diese automatisch an MiningRigRentals übergibt.
 
 ## Autostart mit systemd
 
@@ -54,7 +54,7 @@ ExecStart=/usr/bin/python3 /home/pi/bitaxe-mrr-proxy/stratum_minimal_proxy.py \
   --listen-port 3333 \
   --pool-host eu-de02.miningrigrentals.com \
   --pool-port 3333 \
-  --user gajebald.318975 \
+  --user xxxx.xxx \
   --passw x
 WorkingDirectory=/home/pi/bitaxe-mrr-proxy
 User=pi
