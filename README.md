@@ -18,6 +18,8 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
+If you prefer an automated setup that both installs the proxy and configures it as a systemd service, you can run the provided `setup.sh` script instead of manually following the steps in this section. See the **Automated installation script** section below for details.
+
 ## Usage
 
 Start the proxy with the following parameters:
@@ -77,21 +79,26 @@ sudo systemctl start stratum-proxy
 
 For convenience, this repository includes a `setup.sh` script that automates installation and configuration on a Raspberry Pi or other Debian‑based system.
 
-1. Grant execute permissions and run the script from the repository root:
+1. **Make the script executable and run it** from the repository root:
 
 ```bash
 chmod +x setup.sh
 ./setup.sh
 ```
 
-2. The script prompts you for the MiningRigRentals pool host and port, a local listen port for your Bitaxe, your MRR username.worker, and password. Defaults are suggested and you can press **Enter** to accept them.
+2. The script will prompt you for:
+   - The MiningRigRentals **pool host and port**.
+   - A **local listen port** on which your Bitaxe miner will connect.
+   - Your **MRR username.worker** and **password**.
+   
+   Defaults are suggested for each prompt, and you can press **Enter** to accept them.
 
-3. After collecting the values, the script will:
+3. After collecting the values, the script will automatically:
    - Copy `stratum_minimal_proxy.py` to `/usr/local/bin/`.
-   - Create a systemd service unit at `/etc/systemd/system/bitaxe-mrr-proxy.service` with the provided parameters.
-   - Reload systemd, enable and start the service so it persists across reboots.
+   - Create a systemd service unit at `/etc/systemd/system/bitaxe-mrr-proxy.service` using the parameters you provided.
+   - Reload the systemd daemon, enable and start the service so it persists across reboots.
 
-Once completed, your Bitaxe miner can connect to this Raspberry Pi on the specified listen port (default `3333`). The proxy will forward traffic to MiningRigRentals using the credentials you provided.
+Once the script finishes, your Bitaxe miner can connect to this Raspberry Pi on the specified listen port (default `3333`). The proxy will forward traffic to MiningRigRentals using the credentials you provided.
 
 ## Notes
 
