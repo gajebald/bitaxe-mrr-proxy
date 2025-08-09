@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 
 async def handle_client(client_reader, client_writer, pool_host, pool_port):
     peername = client_writer.get_extra_info('peername')
-    logger.info(f"🧍 Verbindung von Miner {peername}")
+    logger.info(f"🧍 Connection from miner {peername}")
 
     try:
-        # Verbindung zum Pool herstellen
+        # Connect to the pool
         pool_reader, pool_writer = await asyncio.open_connection(pool_host, pool_port)
-        logger.info(f"⛓️ Verbindung zum Pool {pool_host}:{pool_port} hergestellt")
+        logger.info(f"⛓️ Connected to pool {pool_host}:{pool_port}")
 
         async def forward(reader, writer, direction):
             try:
@@ -27,7 +27,7 @@ async def handle_client(client_reader, client_writer, pool_host, pool_port):
                     writer.write(data)
                     await writer.drain()
             except Exception as e:
-                logger.warning(f"⚠️ Fehler bei Weiterleitung ({direction}): {e}")
+                logger.warning(f"⚠️ Error while forwarding ({direction}): {e}")
             finally:
                 try:
                     writer.close()
@@ -40,22 +40,22 @@ async def handle_client(client_reader, client_writer, pool_host, pool_port):
             forward(pool_reader, client_writer, "Pool ➜ Miner")
         )
     except Exception as e:
-        logger.error(f"❌ Fehler bei Verbindung: {e}")
+        logger.error(f"❌ Error during connection: {e}")
     finally:
         try:
             client_writer.close()
             await client_writer.wait_closed()
         except Exception:
             pass
-        logger.info(f"🔌 Verbindung zu {peername} beendet")
+        logger.info(f"🔌 Connection to {peername} closed")
 
 async def main():
-    parser = argparse.ArgumentParser(description="Minimaler Stratum-Proxy für MiningRigRentals")
-    parser.add_argument('--listen-port', type=int, default=3333, help='Port, an dem der Proxy eingehende Verbindungen annimmt')
-    parser.add_argument('--pool-host', type=str, required=True, help='Hostname des MiningRigRentals-Pools')
-    parser.add_argument('--pool-port', type=int, required=True, help='Port des MiningRigRentals-Pools')
-    parser.add_argument('--user', type=str, required=True, help='Benutzername (MRR) – wird derzeit nicht vom Proxy verwendet')
-    parser.add_argument('--passw', type=str, required=True, help='Passwort (MRR) – wird derzeit nicht vom Proxy verwendet')
+    parser = argparse.ArgumentParser(description="Minimal Stratum proxy for MiningRigRentals")
+    parser.add_argument('--listen-port', type=int, default=3333, help='Port on which the proxy accepts incoming connections')
+    parser.add_argument('--pool-host', type=str, required=True, help='Hostname of the MiningRigRentals pool')
+    parser.add_argument('--pool-port', type=int, required=True, help='Port of the MiningRigRentals pool')
+    parser.add_argument('--user', type=str, required=True, help='Username (MRR) – currently not used by the proxy')
+    parser.add_argument('--passw', type=str, required=True, help='Password (MRR) – currently not used by the proxy')
     args = parser.parse_args()
 
     server = await asyncio.start_server(
@@ -64,7 +64,7 @@ async def main():
     )
 
     addr = server.sockets[0].getsockname()
-    logger.info(f"✅ Proxy läuft auf {addr}")
+    logger.info(f"✅ Proxy running at {addr}")
 
     async with server:
         await server.serve_forever()
