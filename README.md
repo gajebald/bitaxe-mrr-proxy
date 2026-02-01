@@ -1,107 +1,196 @@
-bitaxe-mrr-proxy
+# bitaxe-mrr-proxy
 
-A simple Stratum proxy for Bitaxe Gamma 601 and MiningRigRentals. It forwards Stratum‑V1 traffic to MiningRigRentals and helps to avoid redirects. The implementation is based on Python 3 and asyncio.
+A lightweight Stratum V1 proxy for Bitaxe miners (e.g., Bitaxe Gamma 601) and MiningRigRentals. It forwards Stratum traffic transparently and helps avoid pool redirect issues. The implementation uses Python 3 with asyncio for efficient asynchronous operation.
 
-## Installation
+## Features
 
-1. **Clone the repository**:
+- Transparent Stratum V1 protocol forwarding
+- Minimal resource usage (ideal for Raspberry Pi)
+- No external dependencies (Python standard library only)
+- Automatic reconnection on failure
+- Systemd service integration for auto-start
+
+## Requirements
+
+- Python 3.8 or newer
+- Linux with systemd (for automatic startup)
+- Network connectivity to MiningRigRentals
+
+## Quick Start (Automated)
+
+The easiest way to install is using the setup script:
+
+```bash
+git clone https://github.com/gajebald/bitaxe-mrr-proxy.git
+cd bitaxe-mrr-proxy
+chmod +x setup.sh
+./setup.sh
+```
+
+The script will:
+- Check system requirements (Python 3.8+, systemd)
+- Prompt for pool configuration
+- Install the proxy to `/usr/local/bin/`
+- Create and start a systemd service
+
+## Manual Installation
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/gajebald/bitaxe-mrr-proxy.git
 cd bitaxe-mrr-proxy
 ```
 
-2. **Python dependencies**: No additional libraries are required; Python 3.8 or newer is sufficient. Optionally you can create a virtual environment:
+### 2. Test the proxy
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-If you prefer an automated setup that both installs the proxy and configures it as a systemd service, you can run the provided `setup.sh` script instead of manually following the steps in this section. See the **Automated installation script** section below for details.
-
-## Usage
-
-Start the proxy with the following parameters:
+No additional libraries are required. Run directly:
 
 ```bash
 python3 stratum_minimal_proxy.py \
   --listen-port 3333 \
   --pool-host eu-de02.miningrigrentals.com \
   --pool-port 3333 \
-  --user <YOUR_USERNAME.WORKER> \
-  --passw <YOUR_PASSWORD>
+  --user youruser.worker \
+  --passw x
 ```
 
-- `--listen-port`: Port on which your Bitaxe miner will connect to the proxy (e.g. 3333).
-- `--pool-host`: Address of the MiningRigRentals server (e.g. `eu-de02.miningrigrentals.com`).
-- `--pool-port`: Port of the pool. MiningRigRentals can refer you via `client.reconnect` to another port; in that case adjust this value.
-- `--user`: Your MiningRigRentals username including worker suffix (example: `<YOUR_USERNAME.WORKER>`).
-- `--passw`: Password (with MRR usually `x`, or your individual worker password).
+### 3. Configure as systemd service (optional)
 
-## Configure Bitaxe
-
-In the Bitaxe web interface, enter the IP address of your Raspberry Pi as the pool address and the listen port, e.g. `192.168.178.60:3333`. Leave username and password empty, as the proxy forwards these automatically to MiningRigRentals.
-
-## Autostart with systemd
-
-To have the proxy start automatically after every reboot, set up a systemd service. Create a file `/etc/systemd/system/stratum-proxy.service` with the following content (adjust path and username as needed):
+Create `/etc/systemd/system/bitaxe-mrr-proxy.service`:
 
 ```ini
 [Unit]
-Description=Stratum Mining Proxy
-After=network.target
+Description=Bitaxe MRR Proxy - Stratum V1 Mining Proxy
+After=network-online.target
+Wants=network-online.target
 
 [Service]
+Type=simple
+User=pi
 ExecStart=/usr/bin/python3 /home/pi/bitaxe-mrr-proxy/stratum_minimal_proxy.py \
   --listen-port 3333 \
   --pool-host eu-de02.miningrigrentals.com \
   --pool-port 3333 \
-  --user <YOUR_USERNAME.WORKER> \
-  --passw <YOUR_PASSWORD>
-WorkingDirectory=/home/pi/bitaxe-mrr-proxy
-User=pi
+  --user youruser.worker \
+  --passw x
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Then reload systemd, enable and start the service:
+Enable and start:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable stratum-proxy
-sudo systemctl start stratum-proxy
+sudo systemctl enable bitaxe-mrr-proxy
+sudo systemctl start bitaxe-mrr-proxy
 ```
 
-## Automated installation script
+## Command Line Arguments
 
-For convenience, this repository includes a `setup.sh` script that automates installation and configuration on a Raspberry Pi or other Debian‑based system.
+| Argument | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `--listen-port` | No | 3333 | Port for miners to connect to the proxy |
+| `--pool-host` | Yes | - | MiningRigRentals server hostname |
+| `--pool-port` | Yes | - | MiningRigRentals server port |
+| `--user` | Yes | - | MRR username.worker (passed through) |
+| `--passw` | Yes | - | MRR password (usually `x`) |
 
-1. **Make the script executable and run it** from the repository root:
+## MiningRigRentals Servers
+
+Common server addresses:
+
+| Region | Server Address |
+|--------|----------------|
+| Europe (Germany) | `eu-de02.miningrigrentals.com` |
+| US East | `us-east01.miningrigrentals.com` |
+| US West | `us-west01.miningrigrentals.com` |
+
+Check MiningRigRentals documentation for the full list of available servers.
+
+## Configuring Your Bitaxe
+
+In the Bitaxe web interface:
+
+1. **Pool URL**: Enter the IP address of your proxy device and the listen port
+   Example: `192.168.1.100:3333`
+2. **Username**: Your MiningRigRentals username with worker suffix
+   Example: `youruser.worker1`
+3. **Password**: Your MiningRigRentals password (usually `x`)
+
+The proxy forwards all authentication data directly to MiningRigRentals.
+
+## Service Management
+
+After installation with `setup.sh`, use these commands:
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+# Check service status
+sudo systemctl status bitaxe-mrr-proxy
+
+# View live logs
+sudo journalctl -u bitaxe-mrr-proxy -f
+
+# Restart the service
+sudo systemctl restart bitaxe-mrr-proxy
+
+# Stop the service
+sudo systemctl stop bitaxe-mrr-proxy
+
+# Disable auto-start
+sudo systemctl disable bitaxe-mrr-proxy
 ```
 
-2. The script will prompt you for:
-   - The MiningRigRentals **pool host and port**.
-   - A **local listen port** on which your Bitaxe miner will connect.
-   - Your **MRR username.worker** and **password**.
-   
-   Defaults are suggested for each prompt, and you can press **Enter** to accept them.
+## Troubleshooting
 
-3. After collecting the values, the script will automatically:
-   - Copy `stratum_minimal_proxy.py` to `/usr/local/bin/`.
-   - Create a systemd service unit at `/etc/systemd/system/bitaxe-mrr-proxy.service` using the parameters you provided.
-   - Reload the systemd daemon, enable and start the service so it persists across reboots.
+### Service won't start
 
-Once the script finishes, your Bitaxe miner can connect to this Raspberry Pi on the specified listen port (default `3333`). The proxy will forward traffic to MiningRigRentals using the credentials you provided.
+Check logs for errors:
+```bash
+sudo journalctl -u bitaxe-mrr-proxy -n 50
+```
+
+### Connection refused
+
+- Verify the proxy is running: `sudo systemctl status bitaxe-mrr-proxy`
+- Check firewall settings allow connections on the listen port
+- Ensure the Bitaxe is configured with the correct IP and port
+
+### Pool redirect issues
+
+MiningRigRentals may send `client.reconnect` messages to redirect miners to different ports. If you notice connection issues, check the logs for the new port number and update `--pool-port` accordingly.
+
+### Python not found
+
+Ensure Python 3.8+ is installed:
+```bash
+python3 --version
+# If not installed:
+sudo apt update && sudo apt install python3
+```
+
+## How It Works
+
+The proxy operates as a transparent TCP relay:
+
+```
+Bitaxe Miner → [Proxy :3333] → MiningRigRentals Pool
+                    ↑
+              Bidirectional
+              data forwarding
+```
+
+1. Miners connect to the proxy on the configured listen port
+2. The proxy establishes a connection to MiningRigRentals
+3. All Stratum V1 messages are forwarded bidirectionally
+4. No message parsing or modification occurs
 
 ## Notes
 
-- MiningRigRentals may redirect you to a different port after connecting (using the `client.reconnect` Stratum message). If that happens, update `--pool-port` accordingly.
-- This proxy is designed for Stratum V1 only; Stratum V2 is not supported.
-- This project is provided as an example. Use at your own risk.
+- This proxy supports Stratum V1 only; Stratum V2 is not supported
+- The proxy does not modify any mining data or inject its own credentials
+- For multiple miners, a single proxy instance can handle many concurrent connections
+- This project is provided as-is. Use at your own risk.
