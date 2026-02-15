@@ -62,13 +62,14 @@ Create `/etc/systemd/system/bitaxe-mrr-proxy.service`:
 ```ini
 [Unit]
 Description=Bitaxe MRR Proxy - Stratum V1 Mining Proxy
+Documentation=https://github.com/gajebald/bitaxe-mrr-proxy
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
-ExecStart=/usr/bin/python3 /home/pi/bitaxe-mrr-proxy/stratum_minimal_proxy.py \
+User=YOUR_USERNAME
+ExecStart=/usr/bin/python3 /usr/local/bin/stratum_minimal_proxy.py \
   --listen-port 3333 \
   --pool-host eu-de02.miningrigrentals.com \
   --pool-port 3333 \
@@ -76,10 +77,14 @@ ExecStart=/usr/bin/python3 /home/pi/bitaxe-mrr-proxy/stratum_minimal_proxy.py \
   --passw x
 Restart=always
 RestartSec=5
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 ```
+
+Replace `YOUR_USERNAME` with your Linux user (e.g. `pi`). If you used `setup.sh`, the script is already at `/usr/local/bin/stratum_minimal_proxy.py`. Otherwise adjust the path to where you cloned the repository.
 
 Enable and start:
 
@@ -96,8 +101,10 @@ sudo systemctl start bitaxe-mrr-proxy
 | `--listen-port` | No | 3333 | Port for miners to connect to the proxy |
 | `--pool-host` | Yes | - | MiningRigRentals server hostname |
 | `--pool-port` | Yes | - | MiningRigRentals server port |
-| `--user` | Yes | - | MRR username.worker (passed through) |
-| `--passw` | Yes | - | MRR password (usually `x`) |
+| `--user` | Yes | - | MRR username.worker (stored for reference, not actively used) |
+| `--passw` | Yes | - | MRR password, usually `x` (stored for reference, not actively used) |
+
+> **Note:** The `--user` and `--passw` arguments are required by the CLI but not actively used by the proxy. The proxy is a transparent TCP relay — your miner sends its own credentials directly through the connection to MiningRigRentals.
 
 ## MiningRigRentals Servers
 
@@ -121,7 +128,7 @@ In the Bitaxe web interface:
    Example: `youruser.worker1`
 3. **Password**: Your MiningRigRentals password (usually `x`)
 
-The proxy forwards all authentication data directly to MiningRigRentals.
+The proxy is a transparent relay — all Stratum V1 traffic (including authentication) is forwarded as-is between your miner and MiningRigRentals.
 
 ## Service Management
 
@@ -142,6 +149,18 @@ sudo systemctl stop bitaxe-mrr-proxy
 
 # Disable auto-start
 sudo systemctl disable bitaxe-mrr-proxy
+```
+
+## Uninstalling
+
+To completely remove the proxy:
+
+```bash
+sudo systemctl stop bitaxe-mrr-proxy
+sudo systemctl disable bitaxe-mrr-proxy
+sudo rm /etc/systemd/system/bitaxe-mrr-proxy.service
+sudo systemctl daemon-reload
+sudo rm /usr/local/bin/stratum_minimal_proxy.py
 ```
 
 ## Troubleshooting
